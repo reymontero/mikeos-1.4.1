@@ -1,0 +1,1726 @@
+<html>
+<head>
+<title>The MikeOS Handbook</title>
+
+<style type="text/css">
+
+body {
+	font-family: sans-serif;
+}
+
+hr {
+	height: 1px;
+}
+
+pre {
+	background-color: #F0F0F0;
+	border: 5px solid #F0F0F0;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+li {
+	margin-left: -1ex;
+}
+
+</style>
+
+</head>
+
+<body>
+<font face="sans-serif">
+
+
+
+
+<table border="0" cellpadding="10">
+<tr>
+
+
+
+
+<!-- NAVIGATION PANEL -->
+
+<td style="border:1px solid black; width:160px;" valign="top">
+
+<h3>Navigate</h3>
+
+<p><strong>Introduction</strong></p>
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#history">History</a></li>
+<li><a href="#involved">Get involved</a></li>
+</ul>
+
+<p><strong>Running</strong></p>
+<ul>
+<li><a href="#runemulate">Emulation</a></li>
+<li><a href="#runrealpc">Real PCs</a></li>
+<li><a href="#runusing">Using MikeOS</a></li>
+<li><a href="#runserial">Serial port</a></li>
+</ul>
+
+<p><strong>Development</strong></p>
+<ul>
+<li><a href="#building">Building</a></li>
+<li><a href="#addingfiles">Adding files</a></li>
+<li><a href="#structure">Structure</a></li>
+<li><a href="#codepath">Code path</a></li>
+<li><a href="#testzone">Test zone</a></li>
+<li><a href="#syscalls">System calls</a></li>
+<li><a href="#programs">Programs</a></li>
+<li><a href="#monitor">Monitor</a></li>
+</ul>
+
+<p><strong>Making an OS</strong></p>
+<ul>
+<li><a href="#makeintro">Introduction</a></li>
+<li><a href="#pcprimer">PC primer</a></li>
+<li><a href="#asmprimer">Asm primer</a></li>
+<li><a href="#firstos">Your first OS</a></li>
+</ul>
+
+<p><strong>FAQ</strong></p>
+<ul>
+<li><a href="#faq">FAQ</a></li>
+</ul>
+
+<p><strong>Contact</strong></p>
+<ul>
+<li><a href="#contwebsite">Website</a></li>
+<li><a href="#contquestions">Questions</a></li>
+<li><a href="#contbugs">Bug reports</a></li>
+<li><a href="#contpatches">Patches</a></li>
+</ul>
+
+<p><strong>Credits</strong></p>
+<ul>
+<li><a href="#credits">Credits</a></li>
+</ul>
+
+<p><strong>License</strong></p>
+<ul>
+<li><a href="#license">License</a></li>
+</ul>
+
+<p><strong>Resources</strong></p>
+<ul>
+<li><a href="#restools">Tools</a></li>
+<li><a href="#reslinks">Links</a></li>
+<li><a href="#resgofurther">Go further</a></li>
+</ul>
+
+</td>
+
+
+
+
+
+<!-- MAIN CONTENT PANEL -->
+
+<td valign="top">
+
+<h1>The MikeOS Handbook</h1>
+
+<h3>Version 1.4.1, 20 July 2008 - (C) MikeOS Developers</h3>
+
+<p>This is the all-in-one documentation file for the MikeOS operating system. It introduces the project, explains
+how to run it on your PC or in an emulator, and then shows you how to compile and develop for it. If you have
+just downloaded MikeOS and want to try it straight away, go to the <a href="#running">Running MikeOS</a> section.</p>
+
+<p>If you want to write your own operating system, go to the <a href="#makeintro">Making an OS</a> section which explains
+how to get started. The version number for this document, as specified above, matches that of the official MikeOS
+releases. This Handbook is included in the MikeOS release files.</p>
+
+<p>MikeOS is written by <a href="mailto:okachi@gmail.com">Mike Saunders</a> with contributions from
+<a href="#credits">other developers</a>. It is released under a BSD-like open source <a href="#license">license</a>.</p>
+
+<br />
+
+
+<hr noshade="noshade" />
+
+
+<h2>Introduction</h2>
+
+<a name="overview"></a>
+<h3>Overview</h3>
+
+<p>MikeOS is a 16-bit real mode operating system for x86-compatible PCs, written entirely in assembly language, which
+boots from a floppy disk or CD-ROM. It features a text-based dialog-driven user interface, a command-line, support
+for FAT12 (MS-DOS-like) floppy disks and sound via the PC speaker. It can load external programs and has over 40
+system calls. Additionally, basic DOS .COM program support is included.</p>
+
+<p>We do not plan to turn MikeOS into a general-purpose operating system like Linux; it is designed as a learning
+tool, to demonstrate how simple operating systems work. You can use it as the basis of your own OS project, or
+to learn about x86 assembly language. If you would like to delve into OS development, MikeOS is a good place
+to start - the code is simple and well-documented, and we're happy to include new features and fixes.</p>
+
+<p>Why 16-bit? Modern operating systems use 32-bit protected mode code, which provides vital features
+such as memory protection and robust multi-tasking. However, the downside with protected mode is that you lose
+access to the BIOS, the chunk of code that the PC uses to initialise itself. The BIOS provides rudimentary
+drivers for the keyboard and display; therefore, 32-bit protected mode OSes, which can't access the BIOS, need
+to have their own drivers.</p>
+
+<p>By sticking with 16-bit real mode, MikeOS can use the BIOS's keyboard and video drivers, thereby keeping the
+code free of clutter and sticking to the interesting bits: making an OS work. As a simple, educational operating
+system, we're not interested in virtual memory and other 32-bit protected mode features. The MikeOS kernel fits
+into 64K of RAM, so we don't have to worry about dealing with memory segments - plus, it runs from a floppy disk
+or CD-ROM, so no hard-drive installation is required. You simply write MikeOS to a floppy or CD-R and boot your
+PC from it to try it out (or use an emulator).</p>
+
+<br />
+
+
+<a name="history"></a>
+<h3>History</h3>
+
+<p>MikeOS is written almost entirely from scratch, and is not based on any other operating system. A small chunk
+of code to read FAT12 floppy disks (the MS-DOS type) was taken from a bootloader by E Dehling. The project began
+in summer 2006, with the 1.0.0 version released in September 2007. Initially, the OS was an enhanced bootloader that
+read subsequent sectors from a floppy disk and executed them. Following that, FAT12 read support was integrated,
+so that external programs could be loaded, and then rudimentary DOS support was added via handlers for int 20h
+and int 21h. Peter Nemeth subsequently improved the DOS routines. A machine code monitor was added in version
+1.2 (Jan 2008), and an image viewer and Minicom-like serial program was added in 1.3 (April 2008). Version 1.4
+(July 2008) included new system calls and fixes to the FAT12 code.</p>
+
+<br />
+
+
+<a name="involved"></a>
+<h3>Get involved</h3>
+
+<p>As mentioned, we don't plan to turn MikeOS into a complex general-purpose operating system. However, we
+welcome bugfixes, patches and new features, providing that they retain the overall simplicity of MikeOS and
+the code is well-documented. Patches which radically alter the structure of MikeOS will be considered providing
+they don't add vast layers of complexity to the OS! What we'd love to have: more system calls, more hardware
+support (providing the drivers are small), better DOS compatibility and general bugfixes. Note that in many
+places, the source code is designed for readability rather than all-out optimisation.</p>
+
+<p>You can help out by downloading the latest release and testing it out on your PC. Please report any bugs
+to <a href="mailto:okachi@gmail.com">Mike Saunders</a>, and also send any patches you create to the same
+address too. If you have a basic grounding in x86 assembly, you should find the source easy to navigate after
+reading the <a href="#development">Development</a> section in this document. If you've never done any OS programming
+before, please read the <a href="#makeintro">Making an OS</a> section, followed by the Development
+section, which will get you started.</p>
+
+
+
+
+
+<br />
+
+<hr noshade="noshade" />
+
+
+
+
+
+<a name="running"></a>
+<h2>Running MikeOS</h2>
+
+<a name="runemulate"></a>
+<h3>Emulation</h3>
+
+<p>The easiest way to run MikeOS is via a PC emulator. We recommend QEMU, as it's small, free and open source. QEMU
+emulates a PC with various hardware devices such as a floppy disk and keyboard - perfect for testing and developing
+an OS. The MikeOS packages include disk images of the operating system; these are virtual floppy disks and CD-ROMs.
+After all, a disk is just a series of bytes, so it can be represented as a file!</p>
+
+<p>In Linux, open up a terminal and switch into the MikeOS directory. In the <strong>disk_images</strong> sub-directory
+you'll see that there are floppy disk (<strong>mikeos.flp</strong>) and CD (<strong>mikeos.iso</strong>) image files.
+In the main MikeOS directory, enter:</p>
+
+<pre>
+./test-linux.sh
+</pre>
+
+<p>This runs the QEMU PC emulator, booting MikeOS with sound and the serial port emulated. If you're using another
+UNIX-like OS, the script should still work, providing QEMU is in your $PATH. Note that QEMU captures the input of
+your keyboard and mouse, so if you want to get them back for your normal desktop, press <strong>Ctrl+Alt</strong>
+on the left-hand side of your keyboard.</p>
+
+<p>On <strong>Windows and Mac OS X</strong>, you can use PC emulators such as VirtualBox or QEMU,
+booting them from the virtual <strong>mikeos.iso</strong> CD-ROM image. Please see the <a href="#restools">Resources</a>
+section for links. For running via QEMU on Windows, you'll need to use a command like this, if the <strong>mikeos.flp</strong>
+floppy disk image is in your D:\ drive:</p>
+
+<pre>
+qemu.exe -L . -m 4 -boot a -fda d:\mikeos.flp -soundhw all -localtime
+</pre>
+
+
+
+<br />
+
+<a name="runrealpc"></a>
+<h3>Real PCs</h3>
+
+<p>MikeOS should run on any PC with 1MB of RAM and a 386 CPU (ie anything built within the last 15 years will
+be more than adequate).</p>
+
+<p>To run MikeOS on a real PC, simply burn the <strong>mikeos.iso</strong> CD image to a CD-R. You'll find that
+file in the <strong>disk_images</strong> directory of the expanded MikeOS packages. Note that you can't just copy
+the file onto a disc; you need to burn it as a direct ISO image. On Windows, Nero supports a 'Burn ISO image'
+option, and on Linux, you can use K3B or the 'cdrecord' command-line utility.</p>
+
+<p>So, burn <strong>mikeos.iso</strong> to a CD-R and then boot your PC from it. (For most PCs, this simply means
+restarting your machine with the MikeOS CD in your drive - but if it doesn't boot from that, you may need to press
+Del, Esc, F2 or another key at the initial BIOS boot screen to change the boot device order. You can then tell the
+BIOS to boot from CD-ROM rather than the hard drive.)</p>
+
+<p>Note that for very old machines, you can write the <strong>mikeos.flp</strong> image file to a 1.44MB floppy
+disk and boot from that. Please search for RAWRITE on the internet for a Windows tool to help you, and documentation.
+If you're a seasoned Linux user, you can use the standard 'dd' utility to write the disk image to a floppy, eg:</p>
+
+<pre>
+dd if=mikeos.flp of=/dev/fd0
+</pre>
+
+<p>(Note that you can get a version of 'dd' for Windows from <a href="http://www.chrysocome.net/dd">here</a>.)</p>
+
+
+<br />
+
+<a name="runusing"></a>
+<h3>Using MikeOS</h3>
+
+<p>When MikeOS starts, you'll see a dialog box offering you the choice of a command-line (CLI) interface, or
+a menu-driven program selector. Use the cursor keys to select whichever choice you want and hit enter. If you
+select the CLI, you'll be able to type in commands - enter 'help' to see a list of in-built commands. Enter
+'dir' to list the files on the disk, and type a filename to run a program.</p>
+
+<p>Alternatively, if you choose the menu-driven program selector, you can use the cursor keys to select a
+program from the list and hit enter to run it. Note that the DOS compatibility in MikeOS is very basic, so
+if you run a DOS program and it doesn't exit correctly, you will need to restart MikeOS.</p>
+
+<p>Some of the programs included on the disk images:</p>
+
+<ul>
+<li><strong>MIKEKERN.BIN</strong> - the MikeOS kernel</li>
+<li><strong>HELLO.BIN</strong> - the classic 'Hello world' program</li>
+<li><strong>MONITOR.BIN</strong> - lets you enter programs in hex (see <a href="#monitor">here</a>)</li>
+<li><strong>KEYBOARD.BIN</strong> - a music keyboard; press the ZXCVBNM (bottom row) keys to play notes, and Q to quit</li>
+<li><strong>GFXDEMO.BIN</strong> - switches to a different video mode and shows a pattern (press Q to quit)</li>
+<li><strong>PCXVIEW.BIN</strong> - displays 320x200, 256 colour PCX files (eg TEST.PCX)</li>
+<li><strong>DOSTEST.BIN</strong> - a tiny DOS COM program that also runs natively on Windows!</li>
+<li><strong>SERIAL.BIN</strong> - a Minicom-like terminal emulator (see <a href="#runserial">here</a>)</li>
+<li><strong>STAKAN.BIN</strong> - a small freeware DOS game to demonstrate the DOS compatibility</li>
+</ul>
+
+<p>The source for most of these programs can be found in the <strong>programs/</strong> directory.
+If you want to write MikeOS software or test DOS apps (must be .COM programs of 32K or smaller),
+see the Development section below for information on adding files to the disk images.</p>
+
+
+
+<br />
+
+<a name="runserial"></a>
+<h3>Serial port</h3>
+
+<p>As of version 1.3.0, you can use MikeOS as a Minicom-like serial terminal emulator. This lets
+you connect a MikeOS machine to, for instance, a UNIX machine, and operate the UNIX machine from
+MikeOS. Connect a serial (null-modem) cable between the two machines, then set up your UNIX machine
+with a terminal session on the serial port.</p>
+
+<p>For instance, if you have a Linux machine, you would add a line like this to /etc/inittab:</p>
+
+<pre>
+T0:2345:respawn:/sbin/getty/ -L ttyS0 9600 vt100
+</pre>
+
+<p>When you restart your Linux machine, it will wait for a login on the serial port. Connect
+the null-modem cable to a MikeOS machine, and run SERIAL.BIN in MikeOS. You can now enter your
+username and password to log in.</p>
+
+<p>Note that MikeOS configures the serial port to be 9600 baud, no parity, 8 data bits, 1 stop
+bit. If you wish to change these settings, edit <strong>os_main.asm</strong> and see the serial
+port setup code near the start of the file. Also note that only a handful of VT100 commands have
+been implemented at present, so programs which do complicated things with the screen (eg Emacs)
+may not display properly. Currently, there is no way to quit the program; you must reboot MikeOS.</p>
+
+
+
+
+
+<br />
+
+<hr noshade="noshade" />
+
+
+
+
+
+
+<a name="development"></a>
+<h2>Development</h2>
+
+<p>This section explains how to build MikeOS, add programs to the disk images and add your own features
+to the operating system.</p>
+
+<br />
+
+
+<a name="building"></a>
+<h3>Building</h3>
+
+<h4>Linux</h4>
+
+<p>As of the current release, Linux is the supported build platform for MikeOS. However, any UNIX-like platform should be
+capable of building it - so if you modify the build script for, say, FreeBSD or Solaris, please let <a
+href="mailto:okachi@gmail.com">the developers</a> know and we'll include your script. Here's the build process
+for Linux; see the following sections for Windows and Mac OS X.</p>
+
+<p><strong>Build requirements:</strong> the NASM assembler, 'mkisofs' utility and root access. We need root
+access because we loopback-mount the floppy disk image to insert our files.</p>
+
+<p>To build MikeOS, open a terminal and switch into the expanded MikeOS package. Enter <strong>sudo bash</strong>
+in Ubuntu-flavoured distros, or just <strong>su</strong> in others, to switch to the root user. Then enter:</p>
+
+<pre>
+./build-linux.sh
+</pre>
+
+<p>This will use NASM to assemble the bootloader, kernel and supplied programs, then write the bootloader to the
+<strong>mikeos.flp</strong> floppy disk image in the <strong>disk_images/</strong> directory. (It writes the 512-byte
+bootloader to the first sector of the floppy disk image to create a Master Boot Record (MBR) and set up a DOS-like
+filesystem.) Next, the build script loopback-mounts the <strong>mikeos.flp</strong> image onto the filesystem - in other
+words, mounting the image as if it was a real floppy. The script copies over the kernel (<strong>mikekern.bin</strong>)
+and binaries from the <strong>programs/</strong> directory, before unmounting the floppy image.
+
+<p>With that done, the script runs the 'mkisofs' utility to generate a CD-ROM ISO image of MikeOS, injecting
+the floppy image as a boot section. So we end up with two files in the <strong>disk_images/</strong> directory:
+one for floppy disks and one for CD-Rs. You can now use them in an emulator or on a real PC as described in
+the Running section above.</p>
+
+
+<br />
+
+<h4>Windows</h4>
+
+<p>The following information is supplied by Ian Seyler, who built MikeOS under Windows...</p>
+
+<p>1. Download NASM for Windows<br />
+The latest version can be obtained from <a href="http://downloads.sourceforge.net/nasm/nasm-0.98.39-win32.zip">SourceForge</a>.
+It is easiest to extract these files into the C:\Windows folder.</p>
+
+<p>2. Run DOSBUILD.BAT to compile the source</p>
+
+<p>3. Dealing with floppy images<br />
+I have been using 2 utilities for reading and writing the disk images:<br /><br />
+
+<a href="http://www.chrysocome.net/downloads/rawwritewin-0.7.zip">RawWrite for Windows (GUI)</a><br />
+<a href="http://www.chrysocome.net/downloads/dd-0.5.zip">dd for windows (CLI)</a></p>
+
+<p>See also <a href="http://unxutils.sourceforge.net">this page</a> for GNU utilities ported to Windows
+(eg 'dd', 'diff').</p>
+
+<p>There is no loopback mounting for floppy disk images that I could find
+but there is a shareware application for managing files in a disk image:<br /><br />
+<a href="http://www.winimage.com">http://www.winimage.com</a><br />
+<a href="http://america.winimage.com/download/winima81.exe">http://america.winimage.com/download/winima81.exe</a></p>
+
+<p>With this application you can open the floppy disk image and copy a
+new MIKEKERN.BIN file into it. Once you save the image you can use it
+with QEMU or VMware. Also, a quick link for QEMU for Windows is
+<a href="http://www1.interq.or.jp/~t-takeda/qemu/qemu-0.9.0-windows.zip">found here</a>.</p>
+
+
+<br />
+
+<h4>Mac OS X</h4>
+
+<p>Michael van Tellingen has contributed a build script for OS X users. <strong>build-osx.sh</strong>
+generates a floppy disk image (<strong>disk_images/mikeos.dmg</strong>) using OS X's own utilities;
+for making a CD-ROM image, you will need <strong>mkisofs</strong> from elsewhere (eg Fink). The script
+has been tested on OS X 10.4 and 10.5.</p>
+
+<p><strong>NOTE:</strong> Mac OS X is not supplied with NASM. It is available via the Xcode development
+kit, but if you don't want to install that (it's rather large), then you can get the NASM binary and
+an associated library <a href="http://prdownload.berlios.de/mikeos/nasm-osx.tar.gz">from here</a>.
+Copy the NASM binary into <strong>/usr/bin</strong> and the library into <strong>/usr/lib</strong>.</p>
+
+
+
+<br />
+
+
+<a name="addingfiles"></a>
+<h3>Adding files</h3>
+
+<p>To add programs to the MikeOS disk images, you first have to add them to the floppy image. You can use this
+method to test out DOS programs (must be in .COM format and 32K or smaller). In Linux, switch to the the MikeOS
+main directory, then enter the following commands as root:</p>
+
+<pre>
+mkdir looptmp
+mount -o loop -t vfat disk_images/mikeos.flp looptmp
+</pre>
+
+<p>Now the contents of the MikeOS virtual floppy disk image are accessible in the newly-created <strong>looptmp/</strong>
+directory. (We have loopback-mounted the disk image onto our filesystem.) Copy your programs into that directory, for example:</p>
+
+<pre>
+cp ~/DOSPROG.BIN looptmp/
+</pre>
+
+<p>When you're done, unmount the virtual floppy image and remove the temporary directory:</p>
+
+<pre>
+umount looptmp
+rm -rf looptmp
+</pre>
+
+<p>Now you can run the <strong>build-linux.sh</strong> script again; the final stage of this generates the CD-ROM
+ISO image. So not only have you updated the floppy disk image, but the CD version has been updated too, ready
+for testing. Note: you can't just loopback mount the CD ISO image and add files to it; MikeOS has no concept of
+a CD filesystem. Everything is contained in the boot block of the CD - it's effectively the floppy image written
+as a special boot section. So when the CD boots up, it actually thinks it's booting from a floppy disk!</p>
+
+<p>Note that other UNIX-like operating systems have different ways of loopback-mounting disk images; see the
+build scripts for Mac OS X and OpenBSD for examples.</p>
+
+
+<br />
+
+<a name="structure"></a>
+<h3>Structure</h3>
+
+<p>This is the contents of the MikeOS tarball/Zip file:</p>
+
+<table border="1" cellpadding="3">
+
+<tr><td><strong>LICENSE.TXT</strong></td><td>The license under which MikeOS code is released</td></tr>
+<tr><td><strong>README.TXT</strong></td><td>A quick snippet of documentation</td></tr>
+<tr><td><strong>build-linux.sh</strong></td><td>A script for building MikeOS on Linux</td></tr>
+<tr><td><strong>build-openbsd.sh</strong></td><td>A script for building MikeOS on OpenBSD</td></tr>
+<tr><td><strong>build-osx.sh</strong></td><td>A script for building MikeOS on Mac OS X</td></tr>
+<tr><td><strong>dosbuild.bat</strong></td><td>A script for building MikeOS on DOS/Windows</td></tr>
+<tr><td><strong>test-linux.sh</strong></td><td>A script for running MikeOS in the QEMU PC emulator</td></tr>
+<tr><td><strong>disk_images/mikeos.flp</strong></td><td>The floppy disk image</td></tr>
+<tr><td><strong>disk_images/mikeos.dmg</strong></td><td>The floppy disk image (for Mac OS X)</td></tr>
+<tr><td><strong>disk_images/mikeos.iso</strong></td><td>The CD-ROM ISO image</td></tr>
+<tr><td><strong>doc/handbook.html</strong></td><td>This documentation file!</td></tr>
+<tr><td><strong>doc/CHANGES.TXT</strong></td><td>A list of MikeOS changes</td></tr>
+<tr><td><strong>doc/CREDITS.TXT</strong></td><td>The people behind MikeOS</td></tr>
+<tr><td><strong>programs/</strong></td><td>Directory containing example MikeOS software</td></tr>
+<tr><td><strong>source/bootload.asm</strong></td><td>Source code for the bootloader</td></tr>
+<tr><td><strong>source/os_cli.asm</strong></td><td>Source for the command-line interface</td></tr>
+<tr><td><strong>source/os_dos.asm</strong></td><td>Source for the DOS compatibility routines</td></tr>
+<tr><td><strong>source/os_main.asm</strong></td><td>The core kernel source code file</td></tr>
+<tr><td><strong>source/syscalls.asm</strong></td><td>Source for MikeOS system calls</td></tr>
+<tr><td><strong>source/testzone.asm</strong></td><td>A place to try out quick code snippets</td></tr>
+
+</table>
+
+<p>Note that you may see <strong>.bin</strong> files in various places; these are simply assembled
+programs for writing to the disk images. For instance, in the <strong>source/</strong> directory
+you may see <strong>mikekern.bin</strong> which is the assembled binary kernel file.</p>
+
+<p>By far the most important file is <strong>os_main.asm</strong> in the <strong>source/</strong>
+directory. This is the core kernel file - you may notice that it's quite small. This is because
+it's not the entire MikeOS kernel source code; to keep things manageable, we use the <strong>%INCLUDE</strong>
+directive to NASM to add other source files during assembly.</p>
+
+<p>So, <strong>os_main.asm</strong> actually includes <strong>os_cli.asm</strong>, <strong>os_dos.asm</strong>
+and <strong>syscalls.asm</strong>. When the kernel is assembled, NASM lumps all the files together and
+converts them to our 64K <strong>mikekern.bin</strong> file.</p>
+
+<p>As described in the Building section, the build script also assembles the bootloader into a separate
+file (<strong>bootload.bin</strong>), and then assembles any <strong>.asm</strong> files it finds in
+the <strong>programs/</strong> directory.</p>
+
+<p>So, in summary: the main source file is <strong>os_main.asm</strong> which pulls in other source code
+files to make the kernel. The bootloader is a separate assembly file, and assembles to a 512-byte Master
+Boot Record (MBR) which is added to the floppy and CD images. This boot record is executed by the BIOS
+when a PC starts, and it goes on to load the kernel (<strong>mikekern.bin</strong>).</p>
+
+
+
+<br />
+
+<a name="codepath"></a>
+<h3>Code path</h3>
+
+<p>This section describes what happens when MikeOS is running.</p>
+
+<p>The PC BIOS loads our 512-byte bootloader beginning at memory location 0x0000:7C00 and jumps to that point
+to begin executing it. In <strong>bootload.asm</strong>, we execute a <strong>jmp</strong>
+instruction to jump over the following data section. This data section is a disk header to
+describe the layout of the disk in DOS FAT format - it's not important for us, but means that we
+can access the disk just like any other DOS disk.</p>
+
+<p>After that, at <strong>bootloader_start</strong>, we set up the stack and data registers
+to make sure that the CPU is pulling data from the right place and not overwriting our code
+with the stack. The remainder of the bootloader is a DOS file-reading routine which reads the
+kernel from our disk (<strong>mikekern.bin</strong>) and loads it into memory at 0x2000:0x0000.</p>
+
+<p>(The 0x2000 defines the segment, and 0x0000 is the starting point of our segment. Segments are
+an incredibly boring and messy throwback from the 16-bit days; they're designed for working with
+memory in 64K chunks. Because the MikeOS kernel is 64K in size, we just load it into a single segment,
+and then never venture outside of that segment for simplicity reasons. From here onwards, we don't
+have to bother with segments at all.)</p>
+
+<p>So, the kernel is loaded at 0x2000:0x0000 in memory. Our bootloader is ready to jump to the
+kernel code and begin executing it, but it actually jumps to 0x2000:<strong>0x8000</strong> instead.
+Why is this? Well, as mentioned, the MikeOS kernel is 64K. However, the first 32K is blank, zeroed-out
+empty space - we use this later for loading and running programs. So we need to skip past the first
+32K and start executing the second half of the kernel - hence the <strong>jmp</strong> instruction
+towards the end which starts executing at point 0x8000 in the kernel segment.</p>
+
+<p>When the kernel has loaded, this is the 64K memory map of MikeOS (in the kernel segment):</p>
+
+<center>
+<table border="1" cellpadding="3">
+<tr><td><center>0xE000 - 0xFFFF: 8K scratchpad</center></td></tr>
+<tr><td><center>Kernel code<br />(system calls, menu,<br />DOS compatibility,<br />etc.)<br />- - - - - - - - - - -<br />System call vectors</center></td></tr>
+<tr><td><center>0x0000 - 0x7FFF<br />32K space<br />for loading<br />programs</center></td></tr>
+</table>
+</center>
+
+<p>There we can see that the bottom 32K is blank space for loading and executing programs. Hence
+why our bootloader jumps to 0x8000 - the start of the top 32K! (We also have a blank 8K of space
+at the top of our kernel segment - it's an empty area that programs can use as a buffer. Care
+should be exercised with its use since other subroutines may be using it, too.)</p>
+
+<p>At the proper start of our kernel, at 0x8000, we have a series of vectors to system calls.
+These are right at the beginning of the kernel code for one reason: they don't move. For instance,
+a program may want to use the MikeOS <strong>os_print_string</strong> routine, but it doesn't know
+exactly <em>where</em> in the kernel it is. But if we have a <strong>jmp</strong> to it at the
+beginning of the kernel, a program can always find it!</p>
+
+<p>A program can call 0x8003 and expect that to be the <strong>os_print_string</strong> routine. (It's not the routine
+itself, but a jump to the real routine at some random position in the kernel.) Because this is the start of the
+kernel, and we're not going to add code before this point, these vectors always remain in the same place. Look at the file
+<strong>mikedev.inc</strong> in the <strong>programs/</strong> directory: it shows where all the system call vectors are.
+In summary, it means people can write MikeOS programs and use its system calls without worrying about changes to the
+kernel layout. There are lots of system calls available to programs - manipulating strings, getting input, even turning on
+the PC speaker! See <strong>syscalls.asm</strong> for their implementations.</p>
+
+<p>As mentioned, the bootloader jumps into the kernel at 0x8000. If you look in <strong>os_main.asm</strong>
+in the <strong>source/</strong> directory, you'll see that 0x8000 follows the 32K of padded-out space,
+and we have a <strong>jmp</strong> instruction to skip past the vectors. We jump to the <strong>os_main</strong>
+label, which is where our kernel starts execution:</p>
+
+<pre>
+; =================================================================
+; START OF MAIN KERNEL CODE
+
+os_main:
+	cli				; Clear interrupts
+	mov ax, 0
+	mov ss, ax                      ; Set stack segment and pointer
+        mov sp, 0xF000
+	sti				; Restore interrupts
+
+	...
+</pre>
+
+<p>This is where it all begins. Those first five lines give us plenty of room for the stack
+(located in a different memory segment), so that we don't end up overwriting important code
+or data when we're <strong>push</strong>ing and <strong>pop</strong>ping. We're ready to go.</p>
+
+<pre>
+	mov cx, 00h                     ; Divide by 0 error handler
+	mov si, os_compat_int00
+	call os_modify_int_handler
+
+	mov cx, 20h                     ; Set up DOS compatibility...
+	mov si, os_compat_int20         ; ...for interrupts 20h and 21h
+	call os_modify_int_handler
+
+	mov cx, 21h
+	mov si, os_compat_int21
+	call os_modify_int_handler
+</pre>
+
+<p>These next nine lines set up our interrupt handlers. MikeOS does not use interrupts for system
+calls like MS-DOS; it uses direct <strong>call</strong> instructions as per Flex, CPM86 and the PcW 16 Rosanne OS.
+For DOS compatibility, however, we want to catch 20h and 21h interrupts. MikeOS includes a system
+call to change interrupt handlers - so as you can see here, we put the number of the interrupt we
+want to change into CX, and the position in code it should point to in SI, and then call our
+special routine. Now DOS calls will be handled correctly.</p>
+
+<p>After this, we set up the screen (generic text video mode with block cursor) and then display
+a dialog box asking whether the user wants a command-line (CLI) or menu-driven interface. We use
+our own <strong>os_dialog_box</strong> routine for this - indeed, we can use anything in <strong>syscalls.asm</strong>.
+External programs can use the routines in syscalls.asm providing those routines also have vectors in
+the start of the kernel (the top 32K as described before), and a label for those vectors in mikedev.inc.</p>
+
+<p>So, the kernel pops up a dialog box, and if the user chooses a command-line, the kernel jumps
+to the code from <strong>os_cli.asm</strong>. If the user chooses a menu, we continue a bit further
+
+down the main code, where we draw a menu and execute the specified program. In either case, the program is loaded
+into the first 32K of RAM, and the kernel's <strong>os_execute_program</strong> routine jumps to
+0x0100 - this is the code starting point for DOS .COM and MikeOS programs.</p>
+
+
+
+
+<p>Let's summarise the MikeOS kernel execution path:</p>
+
+<ol>
+<li>The 512-byte Master Boot Record (bootload.bin) loads <strong>mikekern.bin</strong> into a 64K segment and starts executing it at the upper 32K (0x8000).</li>
+<li>The kernel skips over the system call vectors, which are used by external programs, and sets up the DOS interrupt handlers and the screen.</li>
+<li>Users can then choose a command-line interface or a menu-driven program selector.</li>
+<li>Either way, the selected program is loaded into the first 32K of RAM, and the kernel jumps to 0x0100 to begin executing it.</li>
+<li>Programs can use the MikeOS system call vectors at 0x8000 and upwards to access routines in the kernel.</li>
+<li>When a program has finished, it uses <strong>ret</strong> to go back to the <strong>os_program_load</strong> routine.</li>
+</ol>
+
+<p><strong>Note on DOS compatibility</strong>: the DOS routines are extremely basic at present, providing
+compatibility for a handful of <strong>int 21h</strong> system calls. They are enough to run some small games
+and tools - even VisiCalc starts up, although it has problems when running. Peter Nemeth has improved these
+calls immensely, but there's still a lot missing. If you're interested in helping out, cool! If you'd rather
+stick with the main MikeOS code, though, never fear: just ignore <strong>os_dos.asm</strong> completely.</p>
+
+
+
+<br />
+
+<a name="testzone"></a>
+<h3>Test zone</h3>
+
+<p>If you want to write some code for MikeOS, but don't want to create a standalone program or alter the OS in any
+way, edit the <strong>testzone.asm</strong> file in the <strong>source/</strong> directory. This contains a routine
+that is executed when you enter 'TEST' at the command-line interface. You can add any code you like to the
+<strong>test_zone</strong> routine without impacting the OS - it's a handy place to try out routines and system
+calls before integrating them into the main OS code.</p>
+
+
+
+<br />
+
+<a name="syscalls"></a>
+<h3>System calls</h3>
+
+<p>The vast majority of the code in MikeOS deals with system calls. These are standalone routines that the MikeOS kernel
+and external programs can call, to minimise code duplication and create a basic API. Look at <strong>syscalls.asm</strong>
+in the <strong>source/</strong> directory - it has many code chunks for writing text to the screen, manipulating strings,
+converting numbers, running programs, accessing the PC speaker and so forth.</p>
+
+<p>Adding new system calls is easy and fun - it extends MikeOS! So if you want to help out, this is the best way to start.
+Open up <strong>syscalls.asm</strong> in a text editor and paste in the following after the header text:</p>
+
+
+<pre>
+; -----------------------------------------------------------------
+; os_say_hello -- Prints 'Hello' to the screen
+; IN/OUT: Nothing
+
+os_say_hello:
+	pusha
+
+	mov si, .message
+	call os_print_string
+
+	popa
+	ret
+
+	.message db 'Hello', 0
+</pre>
+
+<p>There we have it: a new system call that prints 'Hello' to the screen. Hardly a much-needed feature, but it's
+a starting point. The first three lines are comments explaining what the call does, and what registers it accepts
+or returns (like variable passing in high-level languages). Then we have the <strong>os_say_hello:</strong> label
+which indicates where the code starts, before a <strong>pusha</strong>.</p>
+
+<p>All system calls should start with <strong>pusha</strong> and end with <strong>popa</strong> before <strong>ret</strong>:
+this stores registers on the stack at the start, and then pops them off at the end, so that we don't end up changing
+a bunch of registers and confusing the calling program. (If you're passing back a value, say in AX, you should
+store AX in a temporary word and drop it back in between the <strong>popa</strong> and <strong>ret</strong>, as
+seen in <strong>os_wait_for_key</strong>.)</p>
+
+<p>The body of our code simply places the location of our message string into the SI register, then calls another
+MikeOS routine, <strong>os_print_string</strong>. You can freely call other routines from your own system call.</p>
+
+<p>Once we've done this, we can access this routine throughout the kernel. But what about external programs? They
+have no idea where this call is in the kernel! The trick we use is <strong>vectors</strong> - a bunch of <strong>jmp</strong>
+instructions at the start of our kernel code, which jump to these routines. Because these vectors are at the start,
+they never change their position, so we always know where they are.</p>
+
+<p>For instance, right now, your new system call may be at 0x9B9D in the kernel. But if you add another call above,
+or someone else does, it may move to 0x9FA6 in the kernel binary. We simply don't know where it's going to be. But
+if we put at vector at the start of our kernel, before anything else happens, we can use that as the starting point
+as the vector will never move!</p>
+
+<p>Open up <strong>os_main.asm</strong> and scroll down to the list of system call vectors. You can see they start
+from 0x8000. Scroll to the bottom of the list and you'll see something like this:</p>
+
+<pre>
+	jmp os_dump_registers		; 0x8096
+</pre>
+
+<p>The comment here indicates where this bit of code lies in the kernel binary. Once again, it's static, and
+basically says: if your program wants to call <strong>os_file_selector</strong>, it should call 0x806C, as
+this jumps to the required routine and will never change position.</p>
+
+<p>Let's add a vector to our new call. Add this beneath those two lines:</p>
+
+<pre>
+	jmp os_say_hello		; 0x8099
+</pre>
+
+<p>How do we know it's at 0x8099 in the kernel binary? Well, just follow the pattern in the <strong>jmp</strong>s
+above - it's pretty easy to guess. If you're unsure, you can always use <strong>ndisasm</strong> to disassemble
+the kernel and look for the location of the final <strong>jmp</strong> in the list.</p>
+
+<p>That's all good and well, but there's one last thing: people writing external programs don't want to call an ugly
+number like 0x8099 when they run our routine. They want to access it by name, so we need to add a line to
+<strong>mikedev.inc</strong> in the <strong>programs/</strong> directory:</p>
+
+<pre>
+os_say_hello	equ	0x8099	; Prints 'Hello' to screen
+</pre>
+
+<p>Now, any program that includes <strong>mikedev.inc</strong> will be able to call our routine by name.
+Et voila: a brand new system call for MikeOS!</p>
+
+
+
+<br />
+
+<a name="programs"></a>
+<h3>Programs</h3>
+
+<p>If you want to write a program for MikeOS, here's where to start. The OS has a number of system calls
+to handle the screen, manage strings, convert numbers, make sounds from the PC speaker and more. You can
+see a quick list of these in <strong>mikedev.inc</strong> in the <strong>programs/</strong> directory - for
+their full implementations, see <strong>syscalls.asm</strong> in <strong>source/</strong>.</p>
+
+<p>To have your new program assembled and included on the disk images as part of the build process,
+create it in the <strong>programs/</strong> directory. For instance, create a text file there called
+<strong>coolapp.asm</strong> with the following contents:</p>
+
+<pre>
+	BITS 16
+	%INCLUDE 'mikedev.inc'
+	ORG 100h
+
+start:
+	mov si, mystring
+	call os_print_string
+
+	ret
+
+	mystring db 'My first MikeOS program!', 0
+</pre>
+
+<p>This is a tiny program that prints a message on the screen. The first three lines aren't x86 CPU instructions
+but directives to the NASM assembler, telling it that we're in 16-bit mode, we want to use the system calls
+specified in mikedev.inc, and the code section should begin at byte 100 (hexadecimal).</p>
+
+<p>The <strong>start:</strong> label isn't mandatory but useful for clarity. In the following two instructions
+we put the location of our text string into the SI register, then call the MikeOS string printing routine.
+Finally, the <strong>ret</strong> returns execution back to the OS.</p>
+
+<p>Build MikeOS as described at the start of the Development section, and when you run it, you'll now see
+<strong>COOLAPP.BIN</strong> in the list of files on the disk. Run it to see! You can now extend your program
+with more features - see the other example programs as a guide.</p>
+
+
+
+
+<br />
+
+
+
+
+
+
+<a name="monitor"></a>
+<h3>Monitor</h3>
+
+<p>Yutaka Saito has contributed a MikeOS program that lets you enter machine code in hexadecimal format
+and execute it. Run <strong>monitor.bin</strong> from the command line and you'll be presented
+with a '=' prompt. Now you can enter your instructions, or just 'x' to exit back to the OS.</p>
+
+<p>The monitor converts hex code and executes it at location 16384 in RAM - that is, the second
+16K. This is so that your code doesn't overwrite the monitor! Consequently, any code you run should
+be ORGed to 16384. For example, this is a small MikeOS program which displays the letter 'M' on
+the screen. After we've assembled it, we can run <strong>ndisasm</strong> on the resulting binary
+to see the hexadecimal codes:</p>
+
+<center>
+<table width="50%" cellpadding="3" border="1">
+<tr><td><strong>Source code</strong></td><td><strong>Hexadecimal</strong></td></tr>
+<tr><td>BITS 16</td><td>&nbsp;</td></tr>
+<tr><td>%INCLUDE "mikedev.inc"</td><td>&nbsp;</td></tr>
+<tr><td>ORG 16384</td><td>&nbsp;</td></tr>
+<tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td>mov si, message</td><td>BE0740</td></tr>
+<tr><td>call os_print_string</td><td>E8FD3F</td></tr>
+<tr><td>ret</td><td>C3</td></tr>
+<tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td>message db 'M', 0</td><td>4D00</td></tr>
+</table>
+</center>
+
+<p>(The first three lines are merely assembly directives, so they don't generate any code.) Now
+that we have the hex codes, we can enter them into the monitor. Note that the code must be terminated
+with a dollar sign ($) character, and spaces are allowed. So, you can enter at the '=' prompt:</p>
+
+<pre>BE0740 E8FD3F C3 4D00$</pre>
+
+<p>When you enter this, the monitor will convert the hex codes to machine code at location 16384 in
+RAM, and call that location to execute it. (Just like normal MikeOS programs, you should finish with
+a <strong>ret</strong> instruction.) After execution, you'll be returned to the monitor. You can then
+enter 'r' to re-run the converted code, or 'x' to exit.</p>
+
+<p><strong>Note:</strong> if your code doesn't <strong>ret</strong>, execution will continue up to
+the 32K point - that's where the kernel starts. If you forget to do that, it'll look like MikeOS
+has rebooted!</p>
+
+
+
+<br />
+
+
+
+<a name="makeintro"></a>
+<hr noshade="noshade" />
+
+
+
+
+
+<h2>Making an OS</h2>
+
+<p>Quick links for this section:</p>
+
+<ul>
+<li><a href="#makestart">Introduction</a></li>
+<li><a href="#pcprimer">PC primer</a></li>
+<li><a href="#asmprimer">Assembly primer</a></li>
+<li><a href="#firstos">Your first OS</a></li>
+</ul>
+
+
+<p>This is a short guide to operating system development. It is by no means exhaustive, and in writing an OS
+you'll need to consult many different sources on the internet, but this will give you an overview of
+the processes and skills involved.</p>
+
+<br />
+
+
+<a name="makestart"></a>
+<h3>Introduction</h3>
+
+<p>Writing an operating system is hard work: you need programming experience, in-depth hardware knowledge and patience.
+Lots and lots of patience. Unlike, say, programming in Visual Studio, where you're supported by debuggers and documentation
+galore, OS programming drops you onto the bare metal. You have no libraries to work with - nor any helpful error-catching
+facilities. When something goes wrong, you'll most likely end up with a scrambled screen and frozen computer.</p>
+
+<p>Yet it's these aspects of OS programming that also make it great fun and tremendously rewarding. You're writing something
+from scratch, not having to rely on anyone else's libraries to do the grunt work. You have complete control of the machine
+without some annoying OS routine popping up and blocking your way. The computer does exactly what you tell it to do.</p>
+
+<p>Bear in mind that OSes such as Windows and Linux have taken many years (and thousands of man-hours) to get where they
+are today. Consequently, it's best to head for something realistic: a small hobby OS like MikeOS. Once you have the basics
+up-and-running, you can then try to get others involved and start to build up a project.</p>
+
+<p>To start writing your own OS, you need:</p>
+
+<ul>
+<li><strong>Programming experience.</strong> If you're proficient in PHP, JavaScript, C# or some other high-level language,
+that's good, but you should learn something more low-level. After all, in writing an OS you'll be coding to the bare hardware,
+so you won't have any libraries around to help. Learn C - especially pointers and arrays - and you'll have a solid grip on
+memory management. This Handbook is focused on assembly language (machine code) but C is, in some respects, a portable
+wrapper around assembly, so it really helps.</li>
+</ul>
+
+<ul>
+<li><strong>Linux.</strong> OS development is certainly possible on Windows, but it's so much easier on Linux as you can get
+a complete development toolchain in a few mouse-clicks/commands. Linux is also really good for making floppy disk and CD-ROM
+images - you don't need to install loads of fiddly programs. Installing Linux is a doddle thesedays; grab Ubuntu and install
+it in VMware or VirtualBox if you don't want to dual-boot. When you're in Ubuntu, get all the tools you need to follow this guide by entering this in a terminal window:
+<pre>sudo apt-get install build-essential qemu nasm</pre>
+This gets you the development toolchain (compiler etc.), QEMU PC emulator and the NASM assembler, which converts assembly language into
+raw machine code executable files.</li>
+</ul>
+
+<ul>
+<li><strong>Patience.</strong> As mentioned, OS programming is tough work, but very rewarding if you get things right. Even
+after a few weeks, you may only have a simple command-line to show for your efforts. But you're doing something novel -
+something more challenging and stimulating than writing yet another IRC client!</li>
+</ul>
+
+<p>If you've got these things, you're ready to dive into the world of OS coding!</p>
+
+<br />
+
+
+
+<a name="pcprimer"></a>
+<h3>PC primer</h3>
+
+<p>If you're writing an OS for x86 PCs (the best choice, due to the huge amount of documentation available), you'll
+need to understand the basics of how a PC starts up. Fortunately, you don't need to dwell on complicated subjects
+such as graphics drivers and network protocols, as you'll be focusing on the essential parts first.</p>
+
+<p>When a PC is powered-up, it starts executing the BIOS (Basic Input/Output System), which is essentially a mini-OS
+built into the system. It performs a few hardware tests (eg memory checks) and typically spurts out a graphic (eg Dell
+logo) or diagnostic text to the screen. Then, when it's done, it starts to load your operating system from any media it
+can find. Many PCs jump to the hard drive and start executing code they find in the Master Boot Record (MBR), a 512-byte section
+at the start of the hard drive; some try to find executable code on a floppy disk or CD-ROM.</p>
+
+<p>This all depends on the boot order - you can normally specify it in the BIOS options screen. The BIOS loads 512 bytes
+from the chosen media into its memory, and begins executing it. This is the bootloader, the small program that then
+loads the main OS kernel or a larger boot program (eg GRUB/LILO for Linux systems). This 512 byte
+bootloader has two special numbers at the end to tell the OS that it's a Master Boot Record - we'll cover that later.</p>
+
+<p>Note that PCs have an interesting feature for booting. Historically, most PCs had a floppy drive, so the BIOS was
+configured to boot from that device. Today, however, many PCs don't have a floppy drive - only a CD-ROM - so a hack was
+developed to cater for this. When you're booting from a CD-ROM, it can emulate a floppy disk; the BIOS reads the CD-ROM
+drive, loads in a chunk of data, and executes it as if it was a floppy disk. This is incredibly useful for us OS developers,
+as we can make floppy disk versions of our OS, but still boot it on CD-only machines. (Floppy disks are really easy to
+work with, whereas CD-ROM filesystems are much more complicated.)</p>
+
+<p>So, to recap, the boot process is:</p>
+
+<ol>
+<li>Power on: the PC starts up and begins executing the BIOS code.</li>
+<li>The BIOS looks for various media such as a floppy disk, CD-ROM or hard drive.</li>
+<li>The BIOS loads 512 bytes (the MBR) from the specified media and begins executing it.</li>
+<li>Those 512 bytes then go on to load the OS itself, or a more complex bootloader.</li>
+</ol>
+
+<p>For MikeOS, we have the 512-byte bootloader, which we write to a floppy disk image file (a virtual floppy). We can then
+inject that floppy image into a CD, for PCs that only have CD-ROM drives. Either way, the BIOS loads it as if it was on
+a floppy, and starts executing it. We have control of the system!</p>
+
+
+<br />
+
+
+<a name="asmprimer"></a>
+<h3>Assembly language primer</h3>
+
+<p>Most modern operating systems are written in C/C++. That's very useful when portability and code-maintainability are
+crucial, but it adds an extra layer of complexity to the proceedings. For your very first OS, you're better off sticking
+with assembly language, as used in MikeOS. It's more verbose and non-portable, but you don't have to worry about compilers
+and linkers. Besides, you need a bit of assembly to kick-start any OS.</p>
+
+<p>Assembly language (or colloquially "asm") is a textual way of representing the instructions that a CPU executes. For
+instance, an instruction to move some memory in the CPU may be <strong>11001001 01101110</strong> - but that's hardly
+memorable! So assembly provides mnemonics to substitute for these instructions, such as <strong>mov ax, 30</strong>.
+They correlate directly with machine-code CPU instructions, but without the meaningless binary numbers.</p>
+
+<p>Like most programming languages, assembly is a list of instructions followed in order. You can jump around between
+various places and set up subroutines/functions, but it's much more minimal than C# and friends. You can't just print
+"Hello world" to the screen - the CPU has no concept of what a screen is! Instead, you work with memory, manipulating
+chunks of RAM, performing arithmetic on them and putting the results in the right place. Sounds scary? It's a bit alien
+at first, but it's not hard to grasp.</p>
+
+<p>At the assembly language level, there is no such thing as variables in the high-level language sense. What you do have,
+however, is a set of <strong>registers</strong>, which are on-CPU memory stores. You can put numbers into these registers
+and perform calculations on them. In 16-bit mode, these registers can hold numbers between 0 and 65535. Here's a list of
+the fundamental registers on a typical x86 CPU:</p>
+
+<table border="1" cellpadding="5">
+
+<tr>
+
+<td style="width:100px;">AX, BX, CX, DX</td>
+<td>General-purpose registers for storing numbers that you're using. For instance, you may use AX to store the character
+that has been pressed on the keyboard, while using CX to act as a counter in a loop. (Note: these 16-bit registers can
+be split into 8-bit registers such as AH/AL, BH/BL etc.)</td>
+
+</tr>
+
+<tr>
+
+<td style="width:100px;">SI, DI</td>
+<td>Source and destination data index registers. These point to places in memory for retrieving and storing data.</td>
+
+</tr>
+
+<tr>
+
+<td style="width:100px;">SP</td>
+<td>The Stack Pointer (explained in a moment).</td>
+
+</tr>
+
+<tr>
+
+<td style="width:100px;">IP (sometimes CP)</td>
+<td>The Instruction/Code Pointer. This contains the location in memory of the instruction being executed. When an
+instruction has finished, it is incremented and moves on to the next instruction. You can change the contents
+of this register to move around in your code.</td>
+
+</tr>
+</table>
+
+
+<p>So you can use these registers to store numbers as you work - a bit like variables, but they're much
+more fixed in size and purpose. There are a few others, notably <strong>segment registers</strong>. Due to
+limitations in old PCs, memory was handled in 64K chunks called segments. This is a really messy subject, but
+thankfully you don't have to worry about it - for the time being, your OS will be less than a kilobyte anyway!
+In MikeOS, we limit ourselves to a single 64K segment so that we don't have to mess around with segment registers.</p>
+
+<p>The <strong>stack</strong> is an area of your main RAM used for storing temporary information. It's called
+a stack because numbers are stacked one-on-top of another. Imagine a Pringles tube: if you put in a playing
+card, an iPod Shuffle and a beermat, you'll pull them out in the reverse order (beermat, then iPod, and finally
+playing card). It's the same with numbers: if you <strong>push</strong> the numbers 5, 7 and 15 onto the stack,
+you will <strong>pop</strong> them out as 15 first, then 7, and lastly 5. In assembly, you can push registers
+onto the stack and pop them out later - it's useful when you want to store temporarily the value of a register while you
+use that register for something else.</p>
+
+<p>PC <strong>memory</strong> can be viewed as a linear line of pigeon-holes ranging from byte 0 to whatever you have
+installed (millions of bytes on modern machines). At byte number 53,634,246 in your RAM, for instance, you may have your
+web browser code to view this document. But whereas we humans count in powers of 10 (10, 100, 1000 etc. - decimal),
+computers are better off with powers of two (because they're based on binary). So we use <strong>hexadecimal</strong>,
+which is <strong>base 16</strong>, as a way of representing numbers. See this chart to understand:</p>
+
+<table border="1" cellpadding="5">
+<tr><td>Decimal</td>
+<td>0</td>
+<td>1</td>
+<td>2</td>
+<td>3</td>
+<td>4</td>
+<td>5</td>
+<td>6</td>
+<td>7</td>
+<td>8</td>
+<td>9</td>
+<td>10</td>
+<td>11</td>
+<td>12</td>
+<td>13</td>
+<td>14</td>
+<td>15</td>
+<td>16</td>
+<td>17</td>
+<td>18</td>
+<td>19</td>
+<td>20</td>
+</tr>
+
+<tr><td>Hexadecimal</td>
+<td>0</td>
+<td>1</td>
+<td>2</td>
+<td>3</td>
+<td>4</td>
+<td>5</td>
+<td>6</td>
+<td>7</td>
+<td>8</td>
+<td>9</td>
+<td>A</td>
+<td>B</td>
+<td>C</td>
+<td>D</td>
+<td>E</td>
+<td>F</td>
+<td>10</td>
+<td>11</td>
+<td>12</td>
+<td>13</td>
+<td>14</td>
+</table>
+
+<p>As you can see, whereas our normal decimal system uses 0 - 9, hexadecimal uses 0 - F in counting. It's a bit weird
+at first, but you'll get the hang of it. In assembly programming, we identify hexadecimal (hex) numbers by tagging
+a <strong>'h'</strong> onto the end - so <strong>0Ah</strong> is hex for the number <strong>10</strong>. (You
+can also denote hexadecimal in assembly by prefixing the number with 0x - for instance, 0x0A.)</p>
+
+<p>Let's finish off with a few common assembly instructions. These move memory around, compare them and perform
+calculations. They're the building blocks of your OS - there are hundreds of instructions, but you don't have to memorise
+them all, because the most important handful are used 90% of the time.</p>
+
+<table border="1" cellpadding="5">
+
+<tr>
+<td style="width:100px;">mov</td>
+<td>Copies memory from one location or register to another. For instance, <strong>mov ax, 30</strong> places the number
+30 into the AX register. Using square brackets, you can get the number at the memory location pointed to by the register.
+For instance, if BX contains 80, then <strong>mov ax, [bx]</strong> means "get the number in memory location 80, and put
+it into AX". You can move numbers between registers too: <strong>mov bx, cx</strong>.</td>
+</tr>
+
+<tr>
+<td style="width:100px;">add / sub</td>
+<td>Adds a number to a register. <strong>add ax, FFh</strong> adds FF in hexadecimal (255 in our normal decimal) to
+the AX register. You can use <strong>sub</strong> in the same way: <strong>sub dx, 50</strong>.</td>
+</tr>
+
+<tr>
+<td style="width:100px;">cmp</td>
+<td>Compares a register with a number. <strong>cmp cx, 12</strong> compares the CX register with the number 12. It
+then updates a special register on the CPU called <strong>FLAGS</strong> - a special register that contains information
+about the last operation. In this case, if the number 12 is bigger than the value in CX, it generates a negative
+result, and notes that negative in the FLAGS register. We can use this in the following instructions...</td>
+</tr>
+
+<tr>
+<td style="width:100px;">jmp / jg / jl...</td>
+<td>Jump to a different part of the code. <strong>jmp label</strong> jumps (GOTOs) to the part of our source code
+where we have <strong>label:</strong> written. But there's more - you can jump conditionally, based on the CPU
+flags set in the previous command. For instance, if a <strong>cmp</strong> instruction determined that a register
+held a smaller value than the one with which it was compared, you can act on that with <strong>jl label</strong> (jump
+if less-than to label). Similarly, <strong>jge label</strong> jumps to 'label' in the code if the value in the <strong>
+cmp</strong> was greater-than or equal to its compared number.</td>
+</tr>
+
+<tr>
+<td style="width:100px;">int</td>
+<td>Interrupt the program and jump to a specified place in memory. Operating systems set up <strong>interrupts</strong>
+which are analogous to subroutines in high-level languages. For instance, in MS-DOS, the 21h interrupt provides DOS
+services (eg as opening a file). Typically, you put a value in the AX register, then call an interrupt and wait for
+a result (passed back in a register too). When you're writing an OS from scratch, you can call the BIOS with <strong>int 10h,
+int 13h, int 14h</strong> or <strong>int 16h</strong> to perform tasks like printing strings, reading sectors
+from a floppy disk etc.</td>
+</tr>
+
+</table>
+
+
+
+<p>Let's look at some of these instructions in a little more detail. Consider the following code snippet:</p>
+
+
+<pre>
+	mov bx, 1000h
+	mov ax, [bx]
+	cmp ax, 50
+	jge label
+	...
+
+label:
+	mov ax, 10
+</pre>
+
+
+<p>In the first instruction, we move the number 1000h into the BX register. Then, in the second instruction, we store
+in AX whatever's in the memory location pointed to by BX. This is what the <strong>[bx]</strong> means: if we just did
+<strong>mov ax, bx</strong> it'd simply copy the number 1000h into the AX register. But by using square brackets, we're
+saying: don't just copy the contents of BX into AX, but copy the contents of the memory address to which BX points. Given
+that BX contains 1000h, this instruction says: find whatever is at memory location 1000h, and put it into AX.</p>
+
+<p>So, if the byte of memory at location 1000h contains 37, then that number 37 will be put into the AX register via
+our second instruction. Next up, we use <strong>cmp</strong> to compare the number in AX with the number 50 (the decimal
+number 50 - we didn't suffix it with 'h'). The following <strong>jge</strong> instruction acts on the <strong>cmp</strong> comparison,
+which has set the FLAGS register as described earlier. The <strong>jge label</strong> says: if the result from the previous
+comparison is greater than or equal, jump to the part of the code denoted by <strong>label:</strong>. So if the number in
+AX is greater than or equal to 50, execution jumps to label:. If not, execution continues at the '...' stage.</p>
+
+<p>One last thing: you can insert data into a program with the <strong>db</strong> (define byte) directive. For instance,
+this defines a series of bytes with the number zero at the end, representing a string:</p>
+
+<pre>
+	mylabel: db 'Message here', 0
+</pre>
+
+<p>In our assembly code, we know that a string of characters, terminated by a zero, can be found at the <strong>mylabel:</strong>
+position. We could also set up single byte to use somewhat like a variable:</p>
+
+<pre>
+	foo: db 0
+</pre>
+
+<p>Now <strong>foo:</strong> points at a single byte in the code, which in the case of MikeOS will be writable
+as the OS is copied completely to RAM. So you could have this instruction:</p>
+
+<pre>
+	mov byte al, [foo]
+</pre>
+
+<p>This moves the byte pointed to by <strong>foo</strong> into the AL register.</p>
+
+<p>That's the essentials of x86 PC assembly language, and enough to get you started. When writing an OS, though, you'll
+need to learn much more as you progress, so see the <a href="#reslinks">Resources</a> section for links to more in-depth
+assembly tutorials.</p>
+	
+
+
+
+<br />
+
+
+<a name="firstos"></a>
+<h3>Your first OS</h3>
+
+<p>Now you're ready to write your first operating system kernel! Of course, this is going to be extremely bare-bones, just a
+512-byte MBR as described earlier, but it's a starting point for you to expand further. Paste the following code into a
+file called <strong>myfirst.asm</strong> and save it into your home directory - this is the source code to your first
+OS.</p>
+
+<pre>
+	BITS 16
+
+start:
+	mov ax, 07C0h		; Set up 4K stack space after this bootloader
+	add ax, 288		; (4096 + 512) / 16 bytes per paragraph
+	mov ss, ax
+	mov sp, 4096
+
+	mov ax, 07C0h		; Set data segment to where we're loaded
+	mov ds, ax
+
+
+	mov si, text_string	; Put string position into SI
+	call print_string	; Call our string-printing routine
+
+	jmp $			; Jump here - infinite loop!
+
+
+	text_string db 'This is my cool new OS!', 0
+
+
+print_string:			; Routine: output string in SI to screen
+	mov ah, 0Eh		; int 10h 'print char' function
+
+.repeat:
+	lodsb			; Get character from string
+	cmp al, 0
+	je .done		; If char is zero, end of string
+	int 10h			; Otherwise, print it
+	jmp .repeat
+
+.done:
+	ret
+
+
+	times 510-($-$$) db 0	; Pad remainder of MBR sector with 0s
+	dw 0xAA55		; The standard PC boot signature
+</pre>
+
+<p>Let's step through this. The <strong>BITS 16</strong> line isn't an x86 CPU instruction; it just tells the NASM
+assembler that we're working in 16-bit mode. NASM can then translate the following instructions into raw x86 binary.
+Then we have the <strong>start:</strong> label, which isn't strictly needed as execution begins right at the start of the
+file anyway, but it's a good marker. From here onwards, note that the semicolon (;) character is used to denote
+non-executable text comments - we can put anything there.</p>
+
+<p>The following six lines of code aren't really of interest to us - they simply set up the segment registers so that the
+stack pointer (SP) knows where our handy stack of temporary data is, and where the data segment (DS) is located. As
+mentioned, segments are a hideously messy way of handling memory from the old 16-bit days, but we just set up the segment
+registers and forget about them. (The references to 07C0h are the equivalent segment location at which the BIOS loads
+our code, so we start from there.)</p>
+
+<p>The next part is where the fun happens. The <strong>mov si, text_string</strong> line says: copy the location of
+the text string below into the SI register. Simple enough! Then we use <strong>call</strong>, which is like a GOSUB
+in BASIC or a function call in C. It means: jump to the specified section of code, but prepare to come back here when
+we're done.</p>
+
+<p>How does the code know how to do that? Well, when we use a <strong>call</strong> instruction, the CPU increments the
+position of the IP (Instruction Pointer) register and <strong>pushes</strong> it onto the stack. You may recall from
+the previous explanation of the stack that it's a last-in first-out memory storage mechanism. All that business with
+the stack pointer (SP) and stack segment (SS) at the start cleared a space for the stack, so that we can drop temporary
+numbers there without overwriting our code.</p>
+
+<p>So, the <strong>call print_string</strong> says: jump to the print_string routine, but push the location of the next
+instruction onto the stack, so we can <strong>pop</strong> it off later and resume execution here. Execution has jumped
+over to <strong>print_string:</strong> - this routine uses the BIOS to output text to the screen. First we put 0Eh into
+the AH register (the upper byte of AX). Then we have a <strong>lodsb</strong> (load string byte) instruction, which
+retrieves a byte of data from the location pointed to by SI, and stores it in AL (the lower byte of AX). Next we use
+<strong>cmp</strong> to check if that byte is zero - if so, it's the end of the string and we quit printing (jump to the
+<strong>.done</strong> label).</p>
+
+<p>If it's not zero, we call <strong>int 10h</strong> (interrupt our code and go to the BIOS), which reads the value in
+the AH register (0Eh) we set up before. Ah, says the BIOS - 0Eh in the AH register means "print the character in the AL
+register to the screen!". So the BIOS prints the first character in our string, and returns from the <strong>int</strong>
+call. We then jump to the <strong>.repeat</strong> label, which starts the process again - <strong>lodsb</strong> to load
+the next byte from SI (it increments SI each time), see if it's zero and decide what to do. The <strong>ret</strong> at
+the end of our string-printing routine means: "we've finished here - return back to the place where we were
+<strong>call</strong>ed by popping the code location from the stack back into the IP register".</p>
+
+<p>So there we have a demonstration of a loop, in a standalone routine. You can see that the <strong>text_string</strong>
+label is alongside a stream of characters, which we insert into our OS using <strong>db</strong>. The text is in
+apostrophes so that NASM knows it's not code, and at the end we have a zero to tell our <strong>print_string</strong>
+routine that we're at the end.</p>
+
+<p>Let's recap: we start off by setting up the segment registers so that our OS knows where the stack pointer and
+executable code resides. Then we point the SI register at a string in our OS binary, and <strong>call</strong> our
+string-printing routine. This routine scans through the characters pointed to by SI and displays them until it finds a
+zero, at which point it <strong>ret</strong>urns back into the code that <strong>call</strong>ed it. Then the <strong>jmp
+$</strong> line says: keep jumping to the same line. (The '$' in NASM denotes the current point of code.) This sets up an
+infinite loop, so that the message is displayed and our OS doesn't try to execute the following string!</p>
+
+<p>The final two lines are interesting. For a PC to recognise a master boot record (MBR), it has to be exactly 512 bytes in
+size and end with the numbers AAh and 55h (the boot signature). So the first of these lines says: pad out our resulting
+binary file to be 510 bytes in size. Then the second line uses <strong>dw</strong> (define a word - two bytes) containing
+the aforementioned boot signature. Voila: a 512 byte boot file with the correct numbers at the end for the BIOS to
+recognise.</p>
+
+<p>Let's build our new OS. In a terminal window, in your home directory, enter:</p>
+
+<pre>
+nasm -f bin -o myfirst.bin myfirst.asm
+</pre>
+
+<p>Here we assemble the code from our text file into a raw binary file of machine-code instructions. With the
+<strong>-f bin</strong> flag, we tell NASM that we want a plain binary file (not a complicated Linux executable - we
+want it as plain as possible!). The <strong>-o myfirst.bin</strong> part tells NASM to generate the resulting binary
+in a file called myfirst.bin.</p>
+
+<p>Now we need a virtual floppy disk image to which we can write our bootloader-sized kernel. Copy <strong>mikeos.flp</strong>
+from the <strong>disk_images/</strong> directory of the MikeOS bundle into your home directory, and rename it
+<strong>myfirst.flp</strong>. Then enter:</p>
+
+<pre>
+dd status=noxfer conv=notrunc if=myfirst.bin of=myfirst.flp
+</pre>
+
+<p>This uses the 'dd' utility to directly copy our kernel to the first sector of the floppy disk image. When it's
+done, we can boot our new OS using the QEMU PC emulator as follows:</p>
+
+<pre>qemu -fda myfirst.flp</pre>
+
+<p>And there you are! Your OS will boot up in a virtual PC. If you want to use it on a real PC, you can write the
+floppy disk image to a real floppy and boot from it, or generate a CD-ROM ISO image. For the latter, make a new
+directory called <strong>cdiso</strong> and move the <strong>myfirst.flp</strong> file into it. Then, in your
+home directory, enter:</p>
+
+<pre>
+mkisofs -o myfirst.iso -b myfirst.flp cdiso/
+</pre>
+
+<p>This generates a CD-ROM ISO image called <strong>myfirst.iso</strong> with bootable floppy disk emulation, using the
+virtual floppy disk image from before. Now you can burn that ISO to a CD-R and boot your PC from it! (Note that you need
+to burn it as a direct ISO image and not just copy it onto a disc.)</p>
+
+<p>Next you'll want to improve your OS - explore the MikeOS source code to get some inspiration. Remember that bootloaders
+are limited to 512 bytes, so if you want to do a lot more, you'll need to make your bootloader load a separate file from
+the disk and begin executing it, in the same fashion as MikeOS.</p>
+
+
+
+
+<br />
+
+<hr noshade="noshade" />
+
+
+<a name="faq"></a>
+<h2>Frequently Asked Questions</h2>
+
+
+<p><strong>1. Will MikeOS ever use 32-bit / protected mode / C / C++ etc.?</strong></p>
+
+<p>No! MikeOS will not become a general-purpose OS like Linux. We want to keep the code very clean,
+compact and simple - ideal as a learning tool. If you're interested in developing a more versatile
+desktop OS, consider joining the <a href="http://www.syllable.org">Syllable</a> or
+<a href="http://www.haiku-os.org">Haiku</a> projects.</p>
+
+
+<br />
+
+
+<p><strong>2. Can I install MikeOS to my hard drive?</strong></p>
+
+<p>Not yet, no. MikeOS does not include a driver, and adding one may make the code too
+complicated. Also, given the small size of the OS, it's not likely to grow beyond floppy
+disk size any time soon!</p>
+
+
+<br />
+
+
+<p><strong>3. Will MikeOS ever have a GUI?</strong></p>
+
+<p>It depends: if the code isn't too big or complex, we would add a simple GUI. We started work
+on a GUI early in 2007, writing a PS/2 mouse driver, font rendering system and various drawing
+primitives, but the code grew too complex. If you're an assembler guru and understand the MikeOS
+code well, we can supply the earlier MikeOS code tree with the GUI - contact us for details.</p>
+
+
+<br />
+
+
+<p><strong>4. I want to make my own OS; can I use MikeOS as a base?</strong></p>
+
+<p>Of course - that's great. Providing you include the original MikeOS license file (LICENSE.TXT)
+with your software, and retain the copyright notices, you can do as you please. The license is
+a BSD-like license, which lets you do anything with the code apart from claim that you wrote all
+of it! If you start a project based on MikeOS, please let us know and we'll post a link
+in this Handbook.</p>
+
+
+<br />
+
+
+<p><strong>5. I've optimised some chunks of your code...</strong></p>
+
+<p>Excellent - if it's still readable, please do send us the patch. However, there are many
+code snippets in MikeOS which aren't optimised but written for clarity. If you speed up a
+system call without making the code look really weird, that's good, but as a learning tool
+we're aiming for the code to be very easy to understand.</p>
+
+
+<br />
+
+
+<p><strong>6. Why learn how to make a 16-bit OS in assembler?</strong></p>
+
+<p>There are two reasons why this question comes up. First is the 16-bit real mode aspect:
+yes, 16-bit is old. And the DOS days weren't pleasant with all their memory segment woes.
+But MikeOS confines itself to a single 64K segment, so this is not a problem. Also,
+by staying in real mode, MikeOS can use the BIOS to handle the keyboard and floppy
+drive - it doesn't need drivers. All tutorials on writing a 32-bit protected mode
+OS have to pore over writing a keyboard driver just to get started! With real mode
+and the BIOS, we can concentrate on the interesting stuff: making an OS work.</p>
+
+<p>The second aspect of this question is the programming language. Yes, no large scale
+OS should be written in assembler today. But MikeOS, as a learning tool, is all about
+getting stuff done - showing how you can print text to the screen, use system calls,
+run a CLI etc. So, just like we stick with real mode to avoid boring driver hassles,
+we stick with assembler to avoid monotonous warblings about toolchains and linkers. At
+this stage, it's best to get coding; a proper C-based OS can follow later.</p>
+
+
+<br />
+
+<hr noshade="noshade" />
+
+
+
+
+<h2>Contact</h2>
+
+<a name="contwebsite"></a>
+<h3>Website</h3>
+
+<p>The MikeOS project website is located on BerliOS at <a href="http://mikeos.berlios.de">http://mikeos.berlios.de</a>.</p>
+
+<p>This site has the latest release available for download, plus forums, activity statistics and a bug tracker on
+the <a href="http://developer.berlios.de/projects/mikeos/">project page</a>. The most up-to-date version of this document
+is also available at the MikeOS website.</p>
+
+<br />
+
+
+
+<a name="contquestions"></a>
+<h3>Questions</h3>
+
+<p>If you have a question about MikeOS, please first make sure that it hasn't been answered in this documentation
+(especially the FAQ section). You can email <a href="mailto:okachi@gmail.com">Mike Saunders</a>, the lead developer,
+with your question and he will try to reply quickly.</p>
+
+
+<br />
+
+
+<a name="contbugs"></a>
+<h3>Bug reports</h3>
+
+<p>If you have found a reproducible bug in MikeOS, please let us know about it so that we can fix it. The BerliOS
+project page, linked above, includes a bug tracker where you can submit bug reports. However, it may be easier to simply
+email <a href="mailto:okachi@gmail.com">the main developer</a> directly - no need to sign up to BerliOS.</p>
+
+<p>When submitting a bug report, please detail the exact point at which MikeOS didn't work as expected, what happened
+(eg any error messages), and the hardware or emulator you're using. <strong>NOTE:</strong> the DOS compatibility routines
+are incomplete, so you're likely to encounter various bugs if you try running DOS programs. If you find a minor glitch
+that looks like an easy fix, please do let us know about it, but if a random DOS .COM program fails to work, chances
+are we're missing a few routines! Until someone steps in to enhance the DOS compatibility, nothing can be
+done about that yet.</p>
+
+<br />
+
+
+<a name="contpatches"></a>
+<h3>Patches</h3>
+
+<p>If you've made some improvements or additions to MikeOS and wish to submit them, great! If they're small changes -
+such as a bugfix or minor tweak - you can paste the altered code into an email. Explain what it does and where it
+goes in the source code, and if it's OK, we'll include it.</p>
+
+<p>If your change is larger (eg a system call) and affects various parts of the code, you're better off with a
+patch. On UNIX-like systems such as Linux, you can use the <strong>diff</strong> command-line utility to generate
+a list of your changes. For this, you will need the original (release) source code tree of MikeOS, along with the
+tree of your modified code. For instance, you may have the original code in a directory called
+<strong>mikeos-1.4.1/</strong> and your enhanced version in <strong>new-mikeos-1.4.1/</strong>.</p>
+
+<p>Switch to the directory beneath these, and enter:</p>
+
+<pre>
+diff -ru mikeos-1.4.1 new-mikeos-1.4.1 &gt; patch.txt
+</pre>
+
+<p>This collates the differences between the two directories, and directs the output to the file <strong>patch.txt</strong>.
+Have a look at the file to make sure it's OK (you can see how it shows which lines have changed), and then attach the
+file to an email.</p>
+
+<p>Please email small fixes and complete patches to <a href="mailto:okachi@gmail.com">Mike Saunders</a>.</p>
+
+
+
+
+
+<br />
+
+<hr noshade="noshade" />
+
+
+<a name="credits"></a>
+<h2>Credits</h2>
+
+<p>People who have contributed to MikeOS:</p>
+
+<ul>
+<li><strong>Mike Saunders</strong> - main developer and Handbook author</li>
+<li><strong>E Dehling</strong> - wrote the original FAT12 code that MikeOS uses</li>
+<li><strong>Ian Seyler</strong> - serial port and date routines, Windows building info</li>
+<li><strong>Michael van Tellingen</strong> - Mac OS X build script</li>
+<li><strong>Takayoshi Sasano</strong> - OpenBSD build script</li>
+<li><strong>Peter Nemeth</strong> - DOS compatibility improvements and bugfixes</li>
+<li><strong>Walt Nagel</strong> - system calls, code and documentation updates</li>
+<li><strong>Yutaka Saito</strong> - wrote the machine code monitor (monitor.asm)</li>
+</ul>
+
+<p>Thanks to Troy Martin, Michael Crees and Scott Wren for testing, and Helen Ewart for creating the MikeOS cat mascot.</p>
+
+<br />
+
+<hr noshade="noshade" />
+
+
+
+
+<a name="license"></a>
+<h2>License</h2>
+
+<p>This is the license for redistributing and modifying MikeOS. It is based on the BSD license,
+so it is open source, and essentially states: do what you like with the code, providing you
+keep this license file intact and don't claim that you wrote the whole thing!</p>
+
+<pre>
+===================================================================
+MikeOS -- License
+===================================================================
+
+Copyright (C) 2006 - 2008 MikeOS Developers -- http://mikeos.berlios.de
+
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+
+    * Neither the name MikeOS nor the names of any MikeOS contributors
+      may be used to endorse or promote products derived from this software
+      without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY MIKEOS DEVELOPERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL MIKEOS DEVELOPERS BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+===================================================================
+</pre>
+
+
+
+
+<br />
+
+<hr noshade="noshade" />
+
+
+<h2>Resources</h2>
+
+<a name="restools"></a>
+<h3>Tools</h3>
+
+<p>These are the Linux programs you'll need to build MikeOS and test it in a PC emulator. Note that
+depending on your distro, you may be able to get these via your package manager.</p>
+
+<ul>
+<li><strong><a href="http://nasm.sourceforge.net">NASM</a></strong> - the assembler used to build MikeOS</li>
+<li><strong><a href="http://fabrice.bellard.free.fr/qemu/">QEMU</a></strong> - an excellent PC emulator</li>
+</ul>
+
+<p><strong>Windows</strong> users: although Linux is the currently supported build and test platform, QEMU is
+also available for Windows. Please consult the documentation supplied with the Windows version of QEMU.
+You may also want to try <a href="http://www.virtualbox.org">VirtualBox</a>, a free PC emulator with
+a user-friendly interface.</p>
+
+<p><strong>Mac OS X</strong> users: The <a href="http://www.kju-app.org">Q PC Emulator</a>, based on QEMU,
+can be used to boot the MikeOS CD-ROM image. Please consult the Q documentation.</p>
+
+
+
+
+<br />
+
+<a name="reslinks"></a>
+<h3>Links</h3>
+
+<p>Projects based on MikeOS:</p>
+
+<ul>
+<li><strong><a href="http://tbos.berlios.de">TBOS</a></strong> - Troy's Basic Operating System</li>
+<li><strong><a href="http://apolloopsys.sourceforge.net">Apollo OS</a></strong> - plans to include C code and a GUI</li>
+</ul>
+
+
+<p>See these sites for more information on x86 assembly language and OS development:</p>
+
+<ul>
+<li><strong><a href="http://www.osdev.org">OSDev.org</a></strong> - very helpful forums where you can get help, and a useful wiki</li>
+<li><strong><a href="http://www.geocities.com/siliconvalley/park/3230/x86asm/asmles01.html">Roby's Tutorial</a></strong> - great guide to x86 assembly language; geared towards programming on MS-DOS but the concepts are still useful for MikeOS programming</li>
+<li><strong><a href="http://asm.sourceforge.net/intro/hello.html">UNIX assembly</a></strong> - a short guide to assembly on Linux and BSD</li>
+</ul>
+
+<p>If you can recommend any other links that would be useful to MikeOS programmers, please <a href="mailto:okachi@gmail.com">let us know</a>!</p>
+
+
+
+
+
+
+<br />
+
+<a name="resgofurther"></a>
+<h3>Go further</h3>
+
+<p>Want to get involved with a bigger OS project? See these links...</p>
+
+<ul>
+<li><strong><a href="http://www.minix3.org">MINIX 3</a></strong> - small UNIX-like OS; good code to study</li>
+<li><strong><a href="http://www.menuetos.net">MenuetOS</a></strong> - complete OS in 32/64-bit assembly language</li>
+<li><strong><a href="http://www.visopsys.org">Visopsys</a></strong> - unique one-man-project graphical OS</li>
+<li><strong><a href="http://www.syllable.org">Syllable</a></strong> - fast and light desktop OS</li>
+</ul>
+
+
+
+<br />
+
+
+
+<hr noshade="noshade" />
+
+
+
+</td>
+</table>
+
+
+</font>
+</body>
+</html>
+

@@ -1,0 +1,39 @@
+===================================================================
+MikeOS -- Open source 16-bit operating system for x86 PCs
+Copyright (C) 2006 - 2008 MikeOS Developers -- see LICENSE.TXT
+===================================================================
+
+
+PROJECT ADMIN
+
+ * Mike Saunders -- okachi@gmail.com
+
+
+PROGRAMMING
+
+ * Mike Saunders (main code)
+ * E Dehling (original FAT12 filesystem code)
+ * Ian Seyler (serial port and date routines,
+   Windows building information)
+ * Michael van Tellingen (Mac OS X build script)
+ * Takayoshi Sasano (OpenBSD build script)
+ * Peter Nemeth (various DOS routines, bugfixes)
+ * Walt Nagel (new system calls, code fixes and
+   documentation updates)
+ * Yutaka Saiko (machine code monitor)
+
+
+TESTING
+
+ * Troy Martin
+ * Michael Crees
+ * Scott Wren
+
+
+ARTWORK
+
+ * Helen Ewart (cat mascot)
+
+
+===================================================================
+
